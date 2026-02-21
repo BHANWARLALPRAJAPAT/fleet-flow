@@ -38,8 +38,8 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
         </div>
       ),
     },
-    { key: "capacity", label: "Capacity (kg)", render: (val) => val.toLocaleString() },
-    { key: "odometer", label: "Odometer (km)", render: (val) => val.toLocaleString() },
+    { key: "capacity", label: "Capacity (kg)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
+    { key: "odometer", label: "Odometer (km)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
     {
       key: "status",
       label: "Status",
