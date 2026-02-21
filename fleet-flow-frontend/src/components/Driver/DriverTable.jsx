@@ -58,7 +58,7 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
         </div>
       ),
     },
-    { key: "licenseNumber", label: "License #" },
+    { key: "licenseNo", label: "License #" },
     {
       key: "licenseExpiry",
       label: "Expiry",
@@ -74,7 +74,7 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
       label: "Safety Score",
       render: (val) => <SafetyScoreBar score={val || 0} />,
     },
-    { key: "tripsCompleted", label: "Trips", render: (val) => <span className="font-semibold text-slate-600">{val}</span> },
+
     {
       key: "actions",
       label: "Actions",

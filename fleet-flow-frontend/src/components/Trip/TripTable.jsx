@@ -23,7 +23,7 @@ export default function TripTable({ trips, vehicles, drivers, onEdit, onDelete, 
             <span>{row.destination}</span>
           </div>
           <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-            Weight: {row.cargoWeight != null ? Number(row.cargoWeight).toLocaleString() : "—"} kg
+            Weight: {row.cargoWeightKg != null ? Number(row.cargoWeightKg).toLocaleString() : "—"} kg
           </span>
         </div>
       ),
@@ -32,12 +32,12 @@ export default function TripTable({ trips, vehicles, drivers, onEdit, onDelete, 
       key: "assignment",
       label: "Assignment",
       render: (_, row) => {
-        const vehicle = vehicles.find(v => v.id === row.vehicleId);
-        const driver = drivers.find(d => d.id === row.driverId);
+        const vehicleName = row.vehicleName || vehicles.find(v => v.id === row.vehicleId)?.nameModel || "Unknown";
+        const driverName = row.driverName || drivers.find(d => d.id === row.driverId)?.fullName || "Unknown";
         return (
           <div className="flex flex-col text-xs">
-            <span className="font-semibold text-slate-700">🚛 {vehicle?.name || "Unknown"}</span>
-            <span className="text-slate-400">👤 {driver?.fullName || "Unknown"}</span>
+            <span className="font-semibold text-slate-700">🚛 {vehicleName}</span>
+            <span className="text-slate-400">👤 {driverName}</span>
           </div>
         );
       },

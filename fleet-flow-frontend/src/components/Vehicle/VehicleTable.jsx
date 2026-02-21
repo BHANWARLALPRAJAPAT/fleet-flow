@@ -18,13 +18,10 @@ const TYPE_ICONS = {
 export default function VehicleTable({ vehicles, onEdit, onDelete }) {
   const columns = [
     {
-      key: "name",
-      label: "Name",
-      render: (val, row) => (
-        <div className="flex flex-col">
-          <span className="font-bold text-slate-900">{val}</span>
-          <span className="text-xs text-slate-400">{row.model}</span>
-        </div>
+      key: "nameModel",
+      label: "Name / Model",
+      render: (val) => (
+        <span className="font-bold text-slate-900">{val}</span>
       ),
     },
     { key: "licensePlate", label: "Plate" },
@@ -38,8 +35,8 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
         </div>
       ),
     },
-    { key: "capacity", label: "Capacity (kg)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
-    { key: "odometer", label: "Odometer (km)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
+    { key: "maxCapacityKg", label: "Capacity (kg)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
+    { key: "odometerKm", label: "Odometer (km)", render: (val) => val != null ? Number(val).toLocaleString() : "—" },
     {
       key: "status",
       label: "Status",
@@ -61,7 +58,7 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
           <button
             onClick={() => onDelete(row)}
             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-            title="Delete"
+            title="Retire"
           >
             <Trash2 size={16} />
           </button>
@@ -72,3 +69,4 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
 
   return <DataTable columns={columns} data={vehicles} emptyMessage="No vehicles registered yet." />;
 }
+

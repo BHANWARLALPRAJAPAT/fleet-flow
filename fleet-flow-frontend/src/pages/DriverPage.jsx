@@ -4,7 +4,7 @@ import DriverTable from "../components/Driver/DriverTable";
 import DriverForm from "../components/Driver/DriverForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
-import api from "../api/axiosClient";
+import { driversApi } from "../api/driversApi";
 
 export default function DriverPage() {
   const [drivers, setDrivers] = useState([]);
@@ -19,54 +19,11 @@ export default function DriverPage() {
   const fetchDrivers = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/drivers");
-      const data = res.data?._embedded?.drivers || (Array.isArray(res.data) ? res.data : []);
-      if (data.length > 0) {
-        setDrivers(data);
-      } else {
-        throw new Error("No data found");
-      }
+      const data = await driversApi.list();
+      setDrivers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn("Backend /drivers not found or invalid, using mock data");
-      // Set future and near-future dates for testing alerts
-      const today = new Date();
-      const nextMonth = new Date(today);
-      nextMonth.setDate(today.getDate() + 25);
-      const nextYear = new Date(today);
-      nextYear.setFullYear(today.getFullYear() + 1);
-
-      setDrivers([
-        { 
-          id: 1, 
-          fullName: "Michael Scott", 
-          licenseNumber: "DL-10023", 
-          licenseExpiry: nextYear.toISOString().split('T')[0], 
-          licenseCategory: "VAN", 
-          status: "ON_DUTY", 
-          safetyScore: 92, 
-          tripsCompleted: 145 
-        },
-        { 
-          id: 2, 
-          fullName: "Dwight Schrute", 
-          licenseNumber: "DL-99432", 
-          licenseExpiry: nextMonth.toISOString().split('T')[0], 
-          licenseCategory: "TRUCK", 
-          status: "ON_TRIP", 
-          safetyScore: 98, 
-          tripsCompleted: 210 
-        },
-        { 
-          id: 3, 
-          fullName: "Jim Halpert", 
-          licenseNumber: "DL-40502", 
-          licenseExpiry: "2024-01-15", // Expired
-          licenseCategory: "BIKE", 
-          status: "SUSPENDED", 
-          safetyScore: 45, 
-          tripsCompleted: 88 
-        },
-      ]);
+      console.error("Failed to load drivers:", err);
+      setDrivers([]);
     } finally {
       setLoading(false);
     }
@@ -94,28 +51,32 @@ export default function DriverPage() {
   const handleFormSubmit = async (formData) => {
     try {
       if (selectedDriver) {
-        // Update mock
-        setDrivers(prev => prev.map(d => d.id === selectedDriver.id ? { ...d, ...formData } : d));
+        await driversApi.update(selectedDriver.id, formData);
       } else {
-        // Create mock
-        const newDriver = { ...formData, id: Date.now() };
-        setDrivers(prev => [newDriver, ...prev]);
+        await driversApi.create(formData);
       }
       setIsFormOpen(false);
+      fetchDrivers();
     } catch (err) {
-      alert("Failed to save driver");
+      alert("Failed to save driver: " + (err.response?.data?.message || err.message));
     }
   };
 
   const handleConfirmDelete = async () => {
-    setDrivers(prev => prev.filter(d => d.id !== selectedDriver.id));
-    setIsConfirmOpen(false);
+    try {
+      // Change status to SUSPENDED as a soft-delete
+      await driversApi.changeStatus(selectedDriver.id, "SUSPENDED");
+      setIsConfirmOpen(false);
+      fetchDrivers();
+    } catch (err) {
+      alert("Failed to update driver: " + (err.response?.data?.message || err.message));
+    }
   };
 
   const filteredDrivers = Array.isArray(drivers)
     ? drivers.filter(d => 
         (d.fullName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (d.licenseNumber?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+        (d.licenseNo?.toLowerCase() || "").includes(searchQuery.toLowerCase())
       )
     : [];
 
@@ -146,7 +107,7 @@ export default function DriverPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Drivers</p>
-            <p className="text-xl font-bold text-slate-800">{Array.isArray(drivers) ? drivers.filter(d => d.status !== 'OFF_DUTY').length : 0}</p>
+            <p className="text-xl font-bold text-slate-800">{Array.isArray(drivers) ? drivers.filter(d => d.status !== 'OFF_DUTY' && d.status !== 'SUSPENDED').length : 0}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -165,7 +126,7 @@ export default function DriverPage() {
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Avg Safety Score</p>
             <p className="text-xl font-bold text-slate-800">
-              {Array.isArray(drivers) && drivers.length ? Math.round(drivers.reduce((acc, curr) => acc + (curr.safetyScore || 0), 0) / drivers.length) : 0}
+              {Array.isArray(drivers) && drivers.length ? Math.round(drivers.reduce((acc, curr) => acc + (Number(curr.safetyScore) || 0), 0) / drivers.length) : 0}
             </p>
           </div>
         </div>
@@ -234,8 +195,8 @@ export default function DriverPage() {
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Driver Profile"
-        message={`Are you sure you want to remove ${selectedDriver?.fullName}? All associated trip history will be archived.`}
+        title="Suspend Driver"
+        message={`Are you sure you want to suspend ${selectedDriver?.fullName}? Their status will be changed to SUSPENDED.`}
       />
     </div>
   );

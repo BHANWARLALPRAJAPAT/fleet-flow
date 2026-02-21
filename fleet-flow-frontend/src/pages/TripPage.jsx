@@ -5,7 +5,9 @@ import TripForm from "../components/Trip/TripForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
 import TripStatusFlow from "../components/Trip/TripStatusFlow";
-import api from "../api/axiosClient";
+import { tripsApi } from "../api/tripsApi";
+import { vehiclesApi } from "../api/vehiclesApi";
+import { driversApi } from "../api/driversApi";
 
 export default function TripPage() {
   const [trips, setTrips] = useState([]);
@@ -23,33 +25,17 @@ export default function TripPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [vRes, dRes, tRes] = await Promise.all([
-        api.get("/vehicles").catch(() => ({ data: {} })),
-        api.get("/drivers").catch(() => ({ data: {} })),
-        api.get("/trips").catch(() => ({ data: {} }))
+      const [vehicleData, driverData, tripData] = await Promise.all([
+        vehiclesApi.list().catch(() => []),
+        driversApi.list().catch(() => []),
+        tripsApi.list().catch(() => []),
       ]);
 
-      const vehicleData = vRes.data?._embedded?.vehicles || (Array.isArray(vRes.data) ? vRes.data : []);
-      const driverData = dRes.data?._embedded?.drivers || (Array.isArray(dRes.data) ? dRes.data : []);
-      const tripData = tRes.data?._embedded?.trips || (Array.isArray(tRes.data) ? tRes.data : []);
-
-      setVehicles(vehicleData.length > 0 ? vehicleData : [
-        { id: 101, name: "Freight King #1", capacity: 15000, status: "AVAILABLE" },
-        { id: 102, name: "City Van #4", capacity: 2500, status: "AVAILABLE" },
-        { id: 103, name: "Heavy Hauler", capacity: 25000, status: "AVAILABLE" },
-      ]);
-
-      setDrivers(driverData.length > 0 ? driverData : [
-        { id: 201, fullName: "Michael Scott", safetyScore: 92, status: "ON_DUTY" },
-        { id: 202, fullName: "Dwight Schrute", safetyScore: 98, status: "ON_DUTY" },
-        { id: 203, fullName: "Jim Halpert", safetyScore: 85, status: "ON_DUTY" },
-      ]);
-
-      setTrips(tripData.length > 0 ? tripData : [
-        { id: 1, origin: "North Hub", destination: "City Center", vehicleId: 101, driverId: 201, cargoWeight: 8000, status: "DISPATCHED", createdAt: "2026-02-20" },
-        { id: 2, origin: "Warehouse 5", destination: "Port Harbor", vehicleId: 102, driverId: 202, cargoWeight: 1200, status: "DRAFT", createdAt: "2026-02-21" },
-        { id: 3, origin: "Distribution A", destination: "Mall North", vehicleId: 103, driverId: 203, cargoWeight: 18000, status: "COMPLETED", createdAt: "2026-02-18" },
-      ]);
+      setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
+      setDrivers(Array.isArray(driverData) ? driverData : []);
+      setTrips(Array.isArray(tripData) ? tripData : []);
+    } catch (err) {
+      console.error("Failed to load trip data:", err);
     } finally {
       setLoading(false);
     }
@@ -79,31 +65,42 @@ export default function TripPage() {
     setIsConfirmOpen(true);
   };
 
-  const handleFormSubmit = (formData) => {
-    if (selectedTrip) {
-      setTrips(prev => prev.map(t => t.id === selectedTrip.id ? { ...t, ...formData } : t));
-    } else {
-      const newTrip = { 
-        ...formData, 
-        id: Date.now(), 
-        status: "DRAFT", 
-        createdAt: new Date().toISOString() 
-      };
-      setTrips(prev => [newTrip, ...prev]);
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (selectedTrip) {
+        // No update endpoint exists, so just close the form for now
+        // The trip was already created as a draft
+      } else {
+        await tripsApi.create(formData);
+      }
+      setIsFormOpen(false);
+      fetchData();
+    } catch (err) {
+      alert("Failed to save trip: " + (err.response?.data?.message || err.message));
     }
-    setIsFormOpen(false);
   };
 
-  const executeConfirmAction = () => {
+  const executeConfirmAction = async () => {
     const { id, action } = confirmAction;
-    setTrips(prev => prev.map(t => t.id === id ? { ...t, status: action } : t));
-    setIsConfirmOpen(false);
-    setConfirmAction(null);
+    try {
+      if (action === "DISPATCHED") {
+        await tripsApi.dispatch(id, {});
+      } else if (action === "COMPLETED") {
+        await tripsApi.complete(id);
+      } else if (action === "CANCELLED") {
+        await tripsApi.cancel(id);
+      }
+      setIsConfirmOpen(false);
+      setConfirmAction(null);
+      fetchData();
+    } catch (err) {
+      alert("Failed to update trip status: " + (err.response?.data?.message || err.message));
+    }
   };
 
   const filteredTrips = trips.filter(t => 
-    t.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.destination.toLowerCase().includes(searchQuery.toLowerCase())
+    (t.origin || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.destination || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -128,7 +125,7 @@ export default function TripPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard icon={<PlayCircle className="text-blue-500" />} label="In Transit" value={trips.filter(t => t.status === 'DISPATCHED').length} />
         <StatCard icon={<CheckCircle className="text-emerald-500" />} label="Completed" value={trips.filter(t => t.status === 'COMPLETED').length} />
-        <StatCard icon={<Search className="text-slate-400" />} label="Avg Load" value={trips.length ? Math.round(trips.reduce((a,c) => a + c.cargoWeight, 0) / trips.length) + 'kg' : '0kg'} />
+        <StatCard icon={<Search className="text-slate-400" />} label="Avg Load" value={trips.length ? Math.round(trips.reduce((a,c) => a + (Number(c.cargoWeightKg) || 0), 0) / trips.length) + 'kg' : '0kg'} />
         <StatCard icon={<XCircle className="text-red-400" />} label="Cancelled" value={trips.filter(t => t.status === 'CANCELLED').length} />
       </div>
 

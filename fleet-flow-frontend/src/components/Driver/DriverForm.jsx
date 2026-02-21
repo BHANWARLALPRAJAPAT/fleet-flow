@@ -6,17 +6,25 @@ const STATUSES = ["ON_DUTY", "OFF_DUTY", "ON_TRIP", "SUSPENDED"];
 export default function DriverForm({ initialData, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
     fullName: "",
-    licenseNumber: "",
+    phone: "",
+    licenseNo: "",
     licenseExpiry: "",
     licenseCategory: "TRUCK",
     status: "ON_DUTY",
     safetyScore: 100,
-    tripsCompleted: 0,
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        fullName: initialData.fullName || "",
+        phone: initialData.phone || "",
+        licenseNo: initialData.licenseNo || "",
+        licenseExpiry: initialData.licenseExpiry || "",
+        licenseCategory: initialData.licenseCategory || "TRUCK",
+        status: initialData.status || "ON_DUTY",
+        safetyScore: initialData.safetyScore ?? 100,
+      });
     }
   }, [initialData]);
 
@@ -24,7 +32,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
     const { name, value } = e.target;
     setFormData((prev) => ({ 
       ...prev, 
-      [name]: name === "safetyScore" || name === "tripsCompleted" ? Number(value) : value 
+      [name]: name === "safetyScore" ? Number(value) : value 
     }));
   };
 
@@ -48,13 +56,25 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             required
           />
         </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Phone</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="+1 555-0100"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+          />
+        </div>
         
         <div>
           <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">License Number</label>
           <input
             type="text"
-            name="licenseNumber"
-            value={formData.licenseNumber}
+            name="licenseNo"
+            value={formData.licenseNo}
             onChange={handleChange}
             placeholder="DL-12345678"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
@@ -109,19 +129,6 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             required
             min="0"
             max="100"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Trips Completed</label>
-          <input
-            type="number"
-            name="tripsCompleted"
-            value={formData.tripsCompleted}
-            onChange={handleChange}
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-            required
-            min="0"
           />
         </div>
       </div>

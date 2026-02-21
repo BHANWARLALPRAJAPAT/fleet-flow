@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Truck, Wrench, BarChart3, Package, Bell } from "lucide-react";
 import KpiCard from "../components/Dashboard/KpiCard";
 import FilterBar from "../components/Dashboard/FilterBar";
-import api from "../api/axiosClient";
+import { dashboardApi } from "../api/dashboardApi";
 import "../styles/dashboard.css";
 
 export default function DashboardPage() {
@@ -19,17 +19,10 @@ export default function DashboardPage() {
     const fetchKpis = async () => {
       setLoading(true);
       try {
-        const res = await api.get("/dashboard/kpis", { params: filters });
-        setKpis(res.data);
+        const data = await dashboardApi.getKpis();
+        setKpis(data);
       } catch (err) {
-        console.warn("Backend KPI endpoint not found, using mock data");
-        // Mock data for F3 demonstration
-        setKpis({
-          activeFleet: 12,
-          maintenanceAlerts: 3,
-          utilizationRate: "84%",
-          pendingCargo: 7,
-        });
+        console.error("Failed to load KPIs:", err);
       } finally {
         setLoading(false);
       }
