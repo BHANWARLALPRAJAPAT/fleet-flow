@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
 import api from "../api/axiosClient";
+import { useAuth } from "../context/AuthContext";
 
 const schema = yup
   .object({
@@ -27,6 +28,7 @@ export default function LoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const { login } = useAuth();
 
   const {
     register,
@@ -43,21 +45,11 @@ export default function LoginPage() {
 
   const onSubmit = async (values) => {
     setServerError("");
-
-    try {
-      const res = await api.post("/auth/login", {
-        email: values.email,
-        password: values.password,
-      });
-
-      const token = res?.data?.token;
-      if (typeof token === "string" && token.length > 0) {
-        localStorage.setItem("token", token);
-      }
-
+    const result = await login(values.email, values.password);
+    if (result.success) {
       navigate("/", { replace: true });
-    } catch (err) {
-      setServerError("Invalid email or password");
+    } else {
+      setServerError(result.error || "Invalid email or password");
     }
   };
 
