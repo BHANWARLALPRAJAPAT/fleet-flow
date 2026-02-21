@@ -13,6 +13,7 @@ import MaintenancePage from "./pages/MaintenancePage";
 import FuelLogPage from "./pages/FuelLogPage";
 import ExpensePage from "./pages/ExpensePage";
 import ReportsPage from "./pages/ReportsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import { ToastProvider } from "./components/shared/Toast";
 
 function App() {
@@ -43,6 +44,9 @@ function App() {
             <Route path="/expenses" element={<ExpensePage />} />
             <Route path="/reports" element={<ReportsPage />} />
           </Route>
+
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </ToastProvider>
       </AuthProvider>
@@ -51,3 +55,4 @@ function App() {
 }
 
 export default App;
+
