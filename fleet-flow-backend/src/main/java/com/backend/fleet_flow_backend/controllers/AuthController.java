@@ -76,15 +76,19 @@ public class AuthController {
 		if (request == null || request.email() == null || request.password() == null) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing email/password");
 		}
+		String email = request.email().trim();
+		if (email.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing email/password");
+		}
 
 		try {
 			authenticationManager.authenticate(
-					new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+					new UsernamePasswordAuthenticationToken(email, request.password()));
 		} catch (BadCredentialsException ex) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
 		}
 
-		Users user = usersRepository.findByEmailIgnoreCase(request.email())
+		Users user = usersRepository.findByEmailIgnoreCase(email)
 				.orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
 		if (!Boolean.TRUE.equals(user.getIsActive())) {
