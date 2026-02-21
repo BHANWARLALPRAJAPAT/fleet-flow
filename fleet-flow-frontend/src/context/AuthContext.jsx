@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../api/axiosClient";
 
 const AuthContext = createContext(null);
@@ -17,31 +16,53 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem("token");
     const storedRole = localStorage.getItem("role");
     const storedEmail = localStorage.getItem("email");
+    const storedUserId = localStorage.getItem("userId");
     if (storedToken) {
       setToken(storedToken);
       setRole(storedRole);
-      setUser({ email: storedEmail, role: storedRole });
+      setUser({
+        id: storedUserId ? Number(storedUserId) : null,
+        email: storedEmail,
+        role: storedRole,
+      });
     }
   }, []);
+
+  const persistSession = (newToken, userObj) => {
+    const userEmail = userObj?.email ?? "";
+    const userRole = userObj?.role ?? "";
+    const userId = userObj?.id;
+
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("email", userEmail);
+    localStorage.setItem("role", userRole);
+    if (userId !== undefined && userId !== null) {
+      localStorage.setItem("userId", String(userId));
+    } else {
+      localStorage.removeItem("userId");
+    }
+
+    setToken(newToken);
+    setRole(userRole);
+    setUser({ id: userId ?? null, email: userEmail, role: userRole });
+  };
 
   const login = async (email, password) => {
     setLoading(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      const { token: newToken, email: userEmail, role: userRole } = res.data;
+      const newToken = res?.data?.token;
+      const userObj = res?.data?.user;
 
-      localStorage.setItem("token", newToken);
-      localStorage.setItem("role", userRole);
-      localStorage.setItem("email", userEmail);
+      if (typeof newToken !== "string" || newToken.length === 0 || !userObj?.email) {
+        return { success: false, error: "Invalid login response from server." };
+      }
 
-      setToken(newToken);
-      setRole(userRole);
-      setUser({ email: userEmail, role: userRole });
+      persistSession(newToken, userObj);
 
       return { success: true };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Invalid email or password";
+      const message = err.response?.data || "Invalid email or password";
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -51,26 +72,16 @@ export function AuthProvider({ children }) {
   const register = async (email, password, fullName, userRole) => {
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         email,
         password,
         fullName,
         role: userRole,
       });
-      const { token: newToken, email: userEmail, role: resRole } = res.data;
-
-      localStorage.setItem("token", newToken);
-      localStorage.setItem("role", resRole);
-      localStorage.setItem("email", userEmail);
-
-      setToken(newToken);
-      setRole(resRole);
-      setUser({ email: userEmail, role: resRole });
 
       return { success: true };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Registration failed. Try again.";
+      const message = err.response?.data || "Registration failed. Try again.";
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -81,6 +92,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("email");
+    localStorage.removeItem("userId");
     setToken(null);
     setRole(null);
     setUser(null);

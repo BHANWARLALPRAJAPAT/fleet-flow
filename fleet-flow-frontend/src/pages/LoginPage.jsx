@@ -25,6 +25,7 @@ export default function LoginPage() {
   const emailId = useId();
   const passwordId = useId();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -45,6 +46,7 @@ export default function LoginPage() {
 
   const onSubmit = async (values) => {
     setServerError("");
+
     const result = await login(values.email, values.password);
     if (result.success) {
       navigate("/", { replace: true });
