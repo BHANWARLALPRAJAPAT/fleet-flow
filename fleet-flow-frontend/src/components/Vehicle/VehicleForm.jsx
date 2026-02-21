@@ -4,18 +4,24 @@ const VEHICLE_TYPES = ["TRUCK", "VAN", "BIKE"];
 
 export default function VehicleForm({ initialData, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
-    name: "",
-    model: "",
+    nameModel: "",
     licensePlate: "",
     type: "TRUCK",
-    capacity: "",
-    odometer: "",
+    maxCapacityKg: "",
+    odometerKm: "",
     region: "",
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        nameModel: initialData.nameModel || "",
+        licensePlate: initialData.licensePlate || "",
+        type: initialData.type || "TRUCK",
+        maxCapacityKg: initialData.maxCapacityKg || "",
+        odometerKm: initialData.odometerKm || "",
+        region: initialData.region || "",
+      });
     }
   }, [initialData]);
 
@@ -33,27 +39,15 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }) {
     <form id="vehicle-form" onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Vehicle Name</label>
+          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Vehicle Name / Model</label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="nameModel"
+            value={formData.nameModel}
             onChange={handleChange}
-            placeholder="e.g. Heavy Duty #1"
+            placeholder="e.g. Freightliner Cascadia"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
             required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Model</label>
-          <input
-            type="text"
-            name="model"
-            value={formData.model}
-            onChange={handleChange}
-            placeholder="e.g. Scania R500"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
           />
         </div>
 
@@ -83,11 +77,11 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Capacity (kg)</label>
+          <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Max Capacity (kg)</label>
           <input
             type="number"
-            name="capacity"
-            value={formData.capacity}
+            name="maxCapacityKg"
+            value={formData.maxCapacityKg}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
             required
@@ -99,11 +93,10 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }) {
           <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Odometer (km)</label>
           <input
             type="number"
-            name="odometer"
-            value={formData.odometer}
+            name="odometerKm"
+            value={formData.odometerKm}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-            required
             min="0"
           />
         </div>

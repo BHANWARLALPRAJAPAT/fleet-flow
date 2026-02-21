@@ -7,7 +7,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
     driverId: "",
     origin: "",
     destination: "",
-    cargoWeight: "",
+    cargoWeightKg: "",
   });
 
   const [error, setError] = useState("");
@@ -19,7 +19,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
         driverId: initialData.driverId || "",
         origin: initialData.origin || "",
         destination: initialData.destination || "",
-        cargoWeight: initialData.cargoWeight || "",
+        cargoWeightKg: initialData.cargoWeightKg || "",
       });
     }
   }, [initialData]);
@@ -30,22 +30,23 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
     setError(""); // Clear error on change
   };
 
-  const selectedVehicle = vehicles.find(v => v.id.toString() === formData.vehicleId);
+  const selectedVehicle = vehicles.find(v => v.id.toString() === formData.vehicleId.toString());
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     // Validation: Cargo Weight vs Vehicle Capacity
-    if (selectedVehicle && Number(formData.cargoWeight) > selectedVehicle.capacity) {
-      setError(`Cargo weight exceeds vehicle capacity (${selectedVehicle.capacity.toLocaleString()} kg)`);
+    const maxCap = Number(selectedVehicle?.maxCapacityKg) || 0;
+    if (selectedVehicle && maxCap > 0 && Number(formData.cargoWeightKg) > maxCap) {
+      setError(`Cargo weight exceeds vehicle capacity (${maxCap.toLocaleString()} kg)`);
       return;
     }
 
     onSubmit({
       ...formData,
-      vehicleId: Number(formData.vehicleId),
-      driverId: Number(formData.driverId),
-      cargoWeight: Number(formData.cargoWeight),
+      vehicleId: Number(formData.vehicleId) || null,
+      driverId: Number(formData.driverId) || null,
+      cargoWeightKg: Number(formData.cargoWeightKg),
     });
   };
 
@@ -67,7 +68,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
               .filter(v => v.status === "AVAILABLE" || (initialData && v.id === initialData.vehicleId))
               .map(v => (
                 <option key={v.id} value={v.id}>
-                  {v.name} ({v.type}) - Cap: {v.capacity.toLocaleString()} kg
+                  {v.nameModel} ({v.type}) - Cap: {Number(v.maxCapacityKg).toLocaleString()} kg
                 </option>
               ))}
           </select>
@@ -127,8 +128,8 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
           <div className="relative">
             <input
               type="number"
-              name="cargoWeight"
-              value={formData.cargoWeight}
+              name="cargoWeightKg"
+              value={formData.cargoWeightKg}
               onChange={handleChange}
               className={`w-full px-4 py-2.5 bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all`}
               required
@@ -136,7 +137,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             />
             {selectedVehicle && (
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">
-                Max: {selectedVehicle.capacity.toLocaleString()} kg
+                Max: {Number(selectedVehicle.maxCapacityKg).toLocaleString()} kg
               </span>
             )}
           </div>
@@ -151,3 +152,4 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
     </form>
   );
 }
+

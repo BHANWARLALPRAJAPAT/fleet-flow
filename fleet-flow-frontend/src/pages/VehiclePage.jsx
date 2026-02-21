@@ -4,7 +4,7 @@ import VehicleTable from "../components/Vehicle/VehicleTable";
 import VehicleForm from "../components/Vehicle/VehicleForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
-import api from "../api/axiosClient";
+import { vehiclesApi } from "../api/vehiclesApi";
 
 export default function VehiclePage() {
   const [vehicles, setVehicles] = useState([]);
@@ -19,20 +19,11 @@ export default function VehiclePage() {
   const fetchVehicles = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/vehicles");
-      const data = res.data?._embedded?.vehicles || (Array.isArray(res.data) ? res.data : []);
-      if (data.length > 0) {
-        setVehicles(data);
-      } else {
-        throw new Error("No data found");
-      }
+      const data = await vehiclesApi.list();
+      setVehicles(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.warn("Backend /vehicles not found or invalid, using mock data");
-      setVehicles([
-        { id: 1, name: "Freight King #1", model: "Freightliner Cascadia", licensePlate: "ABC-123", type: "TRUCK", capacity: 15000, odometer: 45200, status: "AVAILABLE", region: "North" },
-        { id: 2, name: "City Van #4", model: "Ford Transit", licensePlate: "VAN-404", type: "VAN", capacity: 2500, odometer: 12800, status: "ON_TRIP", region: "Downtown" },
-        { id: 3, name: "Express Bike #9", model: "Yamaha MT-07", licensePlate: "BK-99", type: "BIKE", capacity: 50, odometer: 3400, status: "IN_SHOP", region: "West" },
-      ]);
+      console.error("Failed to load vehicles:", err);
+      setVehicles([]);
     } finally {
       setLoading(false);
     }
@@ -60,34 +51,30 @@ export default function VehiclePage() {
   const handleFormSubmit = async (formData) => {
     try {
       if (selectedVehicle) {
-        // Update
-        // await api.put(`/vehicles/${selectedVehicle.id}`, formData);
-        setVehicles(prev => prev.map(v => v.id === selectedVehicle.id ? { ...v, ...formData } : v));
+        await vehiclesApi.update(selectedVehicle.id, formData);
       } else {
-        // Create
-        // const res = await api.post("/vehicles", formData);
-        const newVehicle = { ...formData, id: Date.now(), status: "AVAILABLE" };
-        setVehicles(prev => [newVehicle, ...prev]);
+        await vehiclesApi.create(formData);
       }
       setIsFormOpen(false);
+      fetchVehicles();
     } catch (err) {
-      alert("Failed to save vehicle");
+      alert("Failed to save vehicle: " + (err.response?.data?.message || err.message));
     }
   };
 
   const handleConfirmDelete = async () => {
     try {
-      // await api.delete(`/vehicles/${selectedVehicle.id}`);
-      setVehicles(prev => prev.filter(v => v.id !== selectedVehicle.id));
+      await vehiclesApi.retire(selectedVehicle.id);
       setIsConfirmOpen(false);
+      fetchVehicles();
     } catch (err) {
-      alert("Failed to delete vehicle");
+      alert("Failed to retire vehicle: " + (err.response?.data?.message || err.message));
     }
   };
 
   const filteredVehicles = Array.isArray(vehicles) 
     ? vehicles.filter(v => 
-        (v.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (v.nameModel?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (v.licensePlate?.toLowerCase() || "").includes(searchQuery.toLowerCase())
       )
     : [];
@@ -172,8 +159,8 @@ export default function VehiclePage() {
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Vehicle"
-        message={`Are you sure you want to delete ${selectedVehicle?.name}? This action cannot be undone.`}
+        title="Retire Vehicle"
+        message={`Are you sure you want to retire ${selectedVehicle?.nameModel}? This action cannot be undone.`}
       />
     </div>
   );

@@ -12,3 +12,4 @@ export const analyticsApi = {
   fuelEfficiency: (params = {}) => api.get('/api/analytics/fuel-efficiency', { params }).then(r => r.data),
   roi: (params = {}) => api.get('/api/analytics/roi', { params }).then(r => r.data),
 };
+
