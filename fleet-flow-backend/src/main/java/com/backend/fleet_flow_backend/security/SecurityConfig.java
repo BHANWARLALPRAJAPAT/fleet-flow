@@ -73,6 +73,7 @@ public class SecurityConfig {
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/users", "/users/**").permitAll()
 						.requestMatchers("/auth/**").permitAll()
 						.requestMatchers("/error").permitAll()
 						.requestMatchers(HttpMethod.GET, "/profile/**").permitAll()

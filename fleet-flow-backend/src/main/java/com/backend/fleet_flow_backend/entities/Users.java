@@ -3,6 +3,7 @@ package com.backend.fleet_flow_backend.entities;
 import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -37,6 +38,7 @@ public class Users {
 	private String email;
 
 	@Column(name = "password_hash", nullable = false)
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String passwordHash;
 
 	@Enumerated(EnumType.STRING)
