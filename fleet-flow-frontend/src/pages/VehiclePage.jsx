@@ -20,9 +20,13 @@ export default function VehiclePage() {
     setLoading(true);
     try {
       const res = await api.get("/vehicles");
-      setVehicles(res.data);
+      if (res.data && Array.isArray(res.data)) {
+        setVehicles(res.data);
+      } else {
+        throw new Error("Invalid data format");
+      }
     } catch (err) {
-      console.warn("Backend /vehicles not found, using mock data");
+      console.warn("Backend /vehicles not found or invalid, using mock data");
       setVehicles([
         { id: 1, name: "Freight King #1", model: "Freightliner Cascadia", licensePlate: "ABC-123", type: "TRUCK", capacity: 15000, odometer: 45200, status: "AVAILABLE", region: "North" },
         { id: 2, name: "City Van #4", model: "Ford Transit", licensePlate: "VAN-404", type: "VAN", capacity: 2500, odometer: 12800, status: "ON_TRIP", region: "Downtown" },
@@ -80,10 +84,12 @@ export default function VehiclePage() {
     }
   };
 
-  const filteredVehicles = vehicles.filter(v => 
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVehicles = Array.isArray(vehicles) 
+    ? vehicles.filter(v => 
+        (v.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (v.licensePlate?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
