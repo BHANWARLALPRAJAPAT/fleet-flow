@@ -1,9 +1,10 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
+import api from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 
 const schema = yup
@@ -24,10 +25,18 @@ export default function LoginPage() {
   const emailId = useId();
   const passwordId = useId();
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [isSendingForgot, setIsSendingForgot] = useState(false);
+  const [forgotBanner, setForgotBanner] = useState("");
+  const [pageBanner] = useState(location.state?.bannerMessage || "");
 
   const {
     register,
@@ -50,6 +59,41 @@ export default function LoginPage() {
       navigate("/", { replace: true });
     } else {
       setServerError(result.error || "Invalid email or password");
+    }
+  };
+
+  const openForgotDialog = () => {
+    setForgotEmail("");
+    setForgotMessage("");
+    setForgotError("");
+    setIsForgotOpen(true);
+  };
+
+  const sendForgotLink = async () => {
+    setForgotMessage("");
+    setForgotError("");
+
+    if (!forgotEmail.trim()) {
+      setForgotError("Please enter your email.");
+      return;
+    }
+
+    try {
+      setIsSendingForgot(true);
+      const res = await api.post("/auth/forgot-password", {
+        email: forgotEmail.trim(),
+      });
+      const successText =
+        typeof res?.data === "string"
+          ? res.data
+          : "Password reset link sent successfully.";
+      setForgotMessage(successText);
+      setForgotBanner(successText);
+      setIsForgotOpen(false);
+    } catch (err) {
+      setForgotError(err.response?.data || "Failed to send reset link.");
+    } finally {
+      setIsSendingForgot(false);
     }
   };
 
@@ -88,7 +132,7 @@ export default function LoginPage() {
                 Sign In
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                Welcome back to the dashboard.
+                Access your FleetFlow command center.
               </p>
             </div>
 
@@ -109,7 +153,11 @@ export default function LoginPage() {
                   <input
                     id={emailId}
                     type="email"
-                    autoComplete="email"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    name="login-email-no-suggest"
                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
                     placeholder="name@company.com"
                     {...register("email")}
@@ -133,7 +181,10 @@ export default function LoginPage() {
                   <a
                     className="text-xs font-semibold text-secondary hover:text-blue-600 dark:text-blue-400"
                     href="#"
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openForgotDialog();
+                    }}
                   >
                     Forgot Password?
                   </a>
@@ -176,6 +227,14 @@ export default function LoginPage() {
               {serverError && (
                 <p className="text-red-500 text-sm font-medium">
                   {serverError}
+                </p>
+              )}
+              {pageBanner && (
+                <p className="text-amber-600 text-sm font-medium">{pageBanner}</p>
+              )}
+              {forgotBanner && (
+                <p className="text-green-600 text-sm font-medium">
+                  {forgotBanner}
                 </p>
               )}
 
@@ -228,6 +287,63 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {isForgotOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-900/55"
+            onClick={() => setIsForgotOpen(false)}
+            aria-label="Close forgot password dialog"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Forgot Password
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Enter your email and we&apos;ll send a reset link.
+            </p>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
+                placeholder="name@company.com"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
+            </div>
+
+            {forgotError && (
+              <p className="mt-3 text-sm font-medium text-red-500">{forgotError}</p>
+            )}
+            {forgotMessage && (
+              <p className="mt-3 text-sm font-medium text-green-600">{forgotMessage}</p>
+            )}
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                onClick={() => setIsForgotOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-primary hover:bg-slate-800 text-white font-semibold disabled:opacity-60"
+                onClick={sendForgotLink}
+                disabled={isSendingForgot}
+              >
+                {isSendingForgot ? "Sending..." : "Send Reset Link"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

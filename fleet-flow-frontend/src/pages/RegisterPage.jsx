@@ -164,7 +164,11 @@ export default function RegisterPage() {
                   <input
                     id={emailId}
                     type="email"
-                    autoComplete="email"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    name="register-email-no-suggest"
                     className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
                     placeholder="name@company.com"
                     {...register("email")}
@@ -184,7 +188,7 @@ export default function RegisterPage() {
                 >
                   Role
                 </label>
-                <div className="relative">
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <span className="material-icons-round text-slate-400 text-xl">
                       admin_panel_settings
@@ -192,7 +196,7 @@ export default function RegisterPage() {
                   </div>
                   <select
                     id={roleId}
-                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white transition-all"
+                    className="block w-full appearance-none cursor-pointer pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary hover:border-slate-300 dark:hover:border-slate-600 text-slate-900 dark:text-white font-medium transition-all"
                     {...register("role")}
                   >
                     {ROLES.map((r) => (
@@ -201,6 +205,11 @@ export default function RegisterPage() {
                       </option>
                     ))}
                   </select>
+                  <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-500 dark:text-slate-400 text-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-1.5 py-0.5 shadow-sm group-focus-within:border-secondary group-focus-within:text-secondary transition-colors">
+                      expand_more
+                    </span>
+                  </div>
                 </div>
                 {errors.role?.message && (
                   <p className="mt-2 text-sm font-medium text-red-500">
