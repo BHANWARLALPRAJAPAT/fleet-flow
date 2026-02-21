@@ -20,10 +20,11 @@ export default function VehiclePage() {
     setLoading(true);
     try {
       const res = await api.get("/vehicles");
-      if (res.data && Array.isArray(res.data)) {
-        setVehicles(res.data);
+      const data = res.data?._embedded?.vehicles || (Array.isArray(res.data) ? res.data : []);
+      if (data.length > 0) {
+        setVehicles(data);
       } else {
-        throw new Error("Invalid data format");
+        throw new Error("No data found");
       }
     } catch (err) {
       console.warn("Backend /vehicles not found or invalid, using mock data");

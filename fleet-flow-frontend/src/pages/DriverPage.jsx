@@ -20,10 +20,11 @@ export default function DriverPage() {
     setLoading(true);
     try {
       const res = await api.get("/drivers");
-      if (res.data && Array.isArray(res.data)) {
-        setDrivers(res.data);
+      const data = res.data?._embedded?.drivers || (Array.isArray(res.data) ? res.data : []);
+      if (data.length > 0) {
+        setDrivers(data);
       } else {
-        throw new Error("Invalid data format");
+        throw new Error("No data found");
       }
     } catch (err) {
       console.warn("Backend /drivers not found or invalid, using mock data");
