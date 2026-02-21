@@ -27,26 +27,26 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(""); // Clear error on change
+    setError("");
   };
 
-  const selectedVehicle = vehicles.find(v => v.id.toString() === formData.vehicleId.toString());
+  const selectedVehicle = vehicles.find(v => String(v.id) === String(formData.vehicleId));
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validation: Cargo Weight vs Vehicle Capacity
-    const maxCap = Number(selectedVehicle?.maxCapacityKg) || 0;
-    if (selectedVehicle && maxCap > 0 && Number(formData.cargoWeightKg) > maxCap) {
-      setError(`Cargo weight exceeds vehicle capacity (${maxCap.toLocaleString()} kg)`);
+    const capacity = Number(selectedVehicle?.maxCapacityKg || selectedVehicle?.capacity || 0);
+    if (selectedVehicle && Number(formData.cargoWeightKg) > capacity) {
+      setError(`Cargo weight exceeds vehicle capacity (${capacity.toLocaleString()} kg)`);
       return;
     }
 
     onSubmit({
-      ...formData,
-      vehicleId: Number(formData.vehicleId) || null,
-      driverId: Number(formData.driverId) || null,
+      origin: formData.origin,
+      destination: formData.destination,
       cargoWeightKg: Number(formData.cargoWeightKg),
+      vehicleId: formData.vehicleId ? Number(formData.vehicleId) : null,
+      driverId: formData.driverId ? Number(formData.driverId) : null,
     });
   };
 
@@ -61,14 +61,13 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             value={formData.vehicleId}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
-            required
           >
             <option value="">Select a vehicle...</option>
             {vehicles
               .filter(v => v.status === "AVAILABLE" || (initialData && v.id === initialData.vehicleId))
               .map(v => (
                 <option key={v.id} value={v.id}>
-                  {v.nameModel} ({v.type}) - Cap: {Number(v.maxCapacityKg).toLocaleString()} kg
+                  {v.nameModel || v.name} ({v.type}) - Cap: {Number(v.maxCapacityKg || v.capacity || 0).toLocaleString()} kg
                 </option>
               ))}
           </select>
@@ -82,7 +81,6 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             value={formData.driverId}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
-            required
           >
             <option value="">Select a driver...</option>
             {drivers
@@ -133,11 +131,11 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
               onChange={handleChange}
               className={`w-full px-4 py-2.5 bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all`}
               required
-              min="1"
+              min="0"
             />
             {selectedVehicle && (
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">
-                Max: {Number(selectedVehicle.maxCapacityKg).toLocaleString()} kg
+                Max: {Number(selectedVehicle.maxCapacityKg || selectedVehicle.capacity || 0).toLocaleString()} kg
               </span>
             )}
           </div>
@@ -152,4 +150,3 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
     </form>
   );
 }
-

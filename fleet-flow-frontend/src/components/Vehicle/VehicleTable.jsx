@@ -6,13 +6,15 @@ const STATUS_COLORS = {
   AVAILABLE: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Available" },
   ON_TRIP: { bg: "bg-blue-100", text: "text-blue-700", label: "On Trip" },
   IN_SHOP: { bg: "bg-orange-100", text: "text-orange-700", label: "In Shop" },
-  RETIRED: { bg: "bg-slate-100", text: "text-slate-700", label: "Retired" },
+  OUT_OF_SERVICE: { bg: "bg-slate-100", text: "text-slate-700", label: "Out of Service" },
+  RETIRED: { bg: "bg-red-100", text: "text-red-700", label: "Retired" },
 };
 
 const TYPE_ICONS = {
   TRUCK: "🚛",
   VAN: "🚐",
   BIKE: "🏍️",
+  OTHER: "🚗",
 };
 
 export default function VehicleTable({ vehicles, onEdit, onDelete }) {
@@ -21,7 +23,7 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
       key: "nameModel",
       label: "Name / Model",
       render: (val) => (
-        <span className="font-bold text-slate-900">{val}</span>
+        <span className="font-bold text-slate-900">{val || "—"}</span>
       ),
     },
     { key: "licensePlate", label: "Plate" },
@@ -31,7 +33,7 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
       render: (val) => (
         <div className="flex items-center gap-2">
           <span>{TYPE_ICONS[val] || "🚗"}</span>
-          <span className="font-medium">{val}</span>
+          <span className="font-medium">{val || "—"}</span>
         </div>
       ),
     },
@@ -42,7 +44,7 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
       label: "Status",
       render: (val) => <StatusPill status={val} colorMap={STATUS_COLORS} />,
     },
-    { key: "region", label: "Region" },
+    { key: "region", label: "Region", render: (val) => val || "—" },
     {
       key: "actions",
       label: "Actions",
@@ -69,4 +71,3 @@ export default function VehicleTable({ vehicles, onEdit, onDelete }) {
 
   return <DataTable columns={columns} data={vehicles} emptyMessage="No vehicles registered yet." />;
 }
-

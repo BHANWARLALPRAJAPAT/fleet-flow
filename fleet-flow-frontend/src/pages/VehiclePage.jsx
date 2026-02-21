@@ -4,11 +4,13 @@ import VehicleTable from "../components/Vehicle/VehicleTable";
 import VehicleForm from "../components/Vehicle/VehicleForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
+import { useToast } from "../components/shared/Toast";
 import { vehiclesApi } from "../api/vehiclesApi";
 
 export default function VehiclePage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   
   // UI State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -52,23 +54,26 @@ export default function VehiclePage() {
     try {
       if (selectedVehicle) {
         await vehiclesApi.update(selectedVehicle.id, formData);
+        toast("Vehicle updated successfully", "success");
       } else {
         await vehiclesApi.create(formData);
+        toast("Vehicle created successfully", "success");
       }
       setIsFormOpen(false);
       fetchVehicles();
     } catch (err) {
-      alert("Failed to save vehicle: " + (err.response?.data?.message || err.message));
+      toast("Failed to save vehicle: " + (err.response?.data?.message || err.message), "error");
     }
   };
 
   const handleConfirmDelete = async () => {
     try {
       await vehiclesApi.retire(selectedVehicle.id);
+      toast("Vehicle retired successfully", "success");
       setIsConfirmOpen(false);
       fetchVehicles();
     } catch (err) {
-      alert("Failed to retire vehicle: " + (err.response?.data?.message || err.message));
+      toast("Failed to retire vehicle: " + (err.response?.data?.message || err.message), "error");
     }
   };
 

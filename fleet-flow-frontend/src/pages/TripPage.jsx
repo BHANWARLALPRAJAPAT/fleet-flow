@@ -4,38 +4,37 @@ import TripTable from "../components/Trip/TripTable";
 import TripForm from "../components/Trip/TripForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
-import TripStatusFlow from "../components/Trip/TripStatusFlow";
 import { tripsApi } from "../api/tripsApi";
 import { vehiclesApi } from "../api/vehiclesApi";
 import { driversApi } from "../api/driversApi";
+import { useToast } from "../components/shared/Toast";
 
 export default function TripPage() {
   const [trips, setTrips] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   
   // UI State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null); // { id, action, title, message }
+  const [confirmAction, setConfirmAction] = useState(null);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [vehicleData, driverData, tripData] = await Promise.all([
+      const [tripData, vehicleData, driverData] = await Promise.all([
+        tripsApi.list().catch(() => []),
         vehiclesApi.list().catch(() => []),
         driversApi.list().catch(() => []),
-        tripsApi.list().catch(() => []),
       ]);
 
+      setTrips(Array.isArray(tripData) ? tripData : []);
       setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
       setDrivers(Array.isArray(driverData) ? driverData : []);
-      setTrips(Array.isArray(tripData) ? tripData : []);
-    } catch (err) {
-      console.error("Failed to load trip data:", err);
     } finally {
       setLoading(false);
     }
@@ -55,28 +54,19 @@ export default function TripPage() {
     setIsFormOpen(true);
   };
 
-  const handleStatusChange = (trip, newStatus, title, message) => {
-    setConfirmAction({
-      id: trip.id,
-      action: newStatus,
-      title,
-      message
-    });
+  const handleStatusChange = (trip, action, title, message) => {
+    setConfirmAction({ id: trip.id, action, title, message });
     setIsConfirmOpen(true);
   };
 
   const handleFormSubmit = async (formData) => {
     try {
-      if (selectedTrip) {
-        // No update endpoint exists, so just close the form for now
-        // The trip was already created as a draft
-      } else {
-        await tripsApi.create(formData);
-      }
+      await tripsApi.create(formData);
+      toast("Trip created successfully", "success");
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
-      alert("Failed to save trip: " + (err.response?.data?.message || err.message));
+      toast("Failed to save trip: " + (err.response?.data?.message || err.message), "error");
     }
   };
 
@@ -84,24 +74,32 @@ export default function TripPage() {
     const { id, action } = confirmAction;
     try {
       if (action === "DISPATCHED") {
-        await tripsApi.dispatch(id, {});
+        // Dispatch requires vehicleId + driverId; the trip already has them from creation
+        const trip = trips.find(t => t.id === id);
+        await tripsApi.dispatch(id, {
+          vehicleId: trip.vehicleId,
+          driverId: trip.driverId,
+        });
+        toast("Trip dispatched successfully", "success");
       } else if (action === "COMPLETED") {
         await tripsApi.complete(id);
+        toast("Trip completed successfully", "success");
       } else if (action === "CANCELLED") {
         await tripsApi.cancel(id);
+        toast("Trip cancelled", "warning");
       }
       setIsConfirmOpen(false);
       setConfirmAction(null);
       fetchData();
     } catch (err) {
-      alert("Failed to update trip status: " + (err.response?.data?.message || err.message));
+      toast("Action failed: " + (err.response?.data?.message || err.message), "error");
     }
   };
 
-  const filteredTrips = trips.filter(t => 
+  const filteredTrips = Array.isArray(trips) ? trips.filter(t => 
     (t.origin || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (t.destination || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -121,11 +119,11 @@ export default function TripPage() {
         </button>
       </div>
 
-      {/* Mini-Stats for Trips */}
+      {/* Mini-Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard icon={<PlayCircle className="text-blue-500" />} label="In Transit" value={trips.filter(t => t.status === 'DISPATCHED').length} />
         <StatCard icon={<CheckCircle className="text-emerald-500" />} label="Completed" value={trips.filter(t => t.status === 'COMPLETED').length} />
-        <StatCard icon={<Search className="text-slate-400" />} label="Avg Load" value={trips.length ? Math.round(trips.reduce((a,c) => a + (Number(c.cargoWeightKg) || 0), 0) / trips.length) + 'kg' : '0kg'} />
+        <StatCard icon={<Search className="text-slate-400" />} label="Avg Load" value={trips.length ? Math.round(trips.reduce((a,c) => a + Number(c.cargoWeightKg || 0), 0) / trips.length) + 'kg' : '0kg'} />
         <StatCard icon={<XCircle className="text-red-400" />} label="Cancelled" value={trips.filter(t => t.status === 'CANCELLED').length} />
       </div>
 
@@ -159,7 +157,10 @@ export default function TripPage() {
           onDispatch={(t) => handleStatusChange(t, "DISPATCHED", "Dispatch Shipment", `Assign vehicle and driver for departure to ${t.destination}?`)}
           onComplete={(t) => handleStatusChange(t, "COMPLETED", "Finalize Trip", "Confirm that the shipment has reached its destination safely.")}
           onCancel={(t) => handleStatusChange(t, "CANCELLED", "Cancel Trip", "Are you sure you want to abort this trip? The assets will be released.")}
-          onDelete={(t) => setTrips(prev => prev.filter(x => x.id !== t.id))}
+          onDelete={async (t) => {
+            // No backend delete endpoint — just remove from local state
+            setTrips(prev => prev.filter(x => x.id !== t.id));
+          }}
         />
       )}
 

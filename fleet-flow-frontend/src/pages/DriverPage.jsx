@@ -4,11 +4,13 @@ import DriverTable from "../components/Driver/DriverTable";
 import DriverForm from "../components/Driver/DriverForm";
 import Modal from "../components/shared/Modal";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
+import { useToast } from "../components/shared/Toast";
 import { driversApi } from "../api/driversApi";
 
 export default function DriverPage() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
   
   // UI State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -52,13 +54,15 @@ export default function DriverPage() {
     try {
       if (selectedDriver) {
         await driversApi.update(selectedDriver.id, formData);
+        toast("Driver updated successfully", "success");
       } else {
         await driversApi.create(formData);
+        toast("Driver registered successfully", "success");
       }
       setIsFormOpen(false);
       fetchDrivers();
     } catch (err) {
-      alert("Failed to save driver: " + (err.response?.data?.message || err.message));
+      toast("Failed to save driver: " + (err.response?.data?.message || err.message), "error");
     }
   };
 
@@ -66,10 +70,11 @@ export default function DriverPage() {
     try {
       // Change status to SUSPENDED as a soft-delete
       await driversApi.changeStatus(selectedDriver.id, "SUSPENDED");
+      toast("Driver suspended successfully", "warning");
       setIsConfirmOpen(false);
       fetchDrivers();
     } catch (err) {
-      alert("Failed to update driver: " + (err.response?.data?.message || err.message));
+      toast("Failed to update driver: " + (err.response?.data?.message || err.message), "error");
     }
   };
 

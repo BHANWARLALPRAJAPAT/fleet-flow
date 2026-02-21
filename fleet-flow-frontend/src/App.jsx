@@ -12,11 +12,13 @@ import MaintenancePage from "./pages/MaintenancePage";
 import FuelLogPage from "./pages/FuelLogPage";
 import ExpensePage from "./pages/ExpensePage";
 import ReportsPage from "./pages/ReportsPage";
+import { ToastProvider } from "./components/shared/Toast";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastProvider>
         <Routes>
           {/* Public routes — no layout */}
           <Route path="/login" element={<LoginPage />} />
@@ -40,6 +42,7 @@ function App() {
             <Route path="/reports" element={<ReportsPage />} />
           </Route>
         </Routes>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );
