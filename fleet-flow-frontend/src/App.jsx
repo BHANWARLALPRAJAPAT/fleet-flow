@@ -1,15 +1,48 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AppLayout from "./components/Layout/AppLayout";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
+import VehiclePage from "./pages/VehiclePage";
+import DriverPage from "./pages/DriverPage";
+import TripPage from "./pages/TripPage";
+import MaintenancePage from "./pages/MaintenancePage";
+import FuelLogPage from "./pages/FuelLogPage";
+import ExpensePage from "./pages/ExpensePage";
+import ReportsPage from "./pages/ReportsPage";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<DashboardPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes — no layout */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          {/* Protected routes — wrapped in layout */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/vehicles" element={<VehiclePage />} />
+            <Route path="/drivers" element={<DriverPage />} />
+            <Route path="/trips" element={<TripPage />} />
+            <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/fuel-logs" element={<FuelLogPage />} />
+            <Route path="/expenses" element={<ExpensePage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
+
 export default App;
