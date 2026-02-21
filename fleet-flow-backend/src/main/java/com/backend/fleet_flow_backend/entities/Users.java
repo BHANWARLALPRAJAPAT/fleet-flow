@@ -2,6 +2,8 @@ package com.backend.fleet_flow_backend.entities;
 
 import java.time.OffsetDateTime;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -43,7 +45,8 @@ public class Users {
 	private UserRole role = UserRole.DISPATCHER;
 
 	@Column(name = "is_active", nullable = false)
-	private boolean isActive = true;
+	@JsonAlias({ "active" })
+	private Boolean isActive = true;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private OffsetDateTime createdAt;
@@ -56,6 +59,9 @@ public class Users {
 		OffsetDateTime now = OffsetDateTime.now();
 		if (createdAt == null) {
 			createdAt = now;
+		}
+		if (isActive == null) {
+			isActive = true;
 		}
 		updatedAt = now;
 	}
