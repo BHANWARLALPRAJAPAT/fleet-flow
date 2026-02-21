@@ -49,7 +49,7 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
       render: (val, row) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
-            {val.split(' ').map(n => n[0]).join('')}
+            {(val || '').split(' ').map(n => n[0]).join('')}
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-slate-800">{val}</span>
@@ -72,7 +72,7 @@ export default function DriverTable({ drivers, onEdit, onDelete }) {
     {
       key: "safetyScore",
       label: "Safety Score",
-      render: (val) => <SafetyScoreBar score={val} />,
+      render: (val) => <SafetyScoreBar score={val || 0} />,
     },
     { key: "tripsCompleted", label: "Trips", render: (val) => <span className="font-semibold text-slate-600">{val}</span> },
     {
