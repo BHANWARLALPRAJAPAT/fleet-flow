@@ -38,13 +38,14 @@ public class AuthController {
 
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-		if (request == null || request.email() == null || request.password() == null) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing email/password");
+		if (request == null || request.email() == null || request.password() == null || request.name() == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing name/email/password");
 		}
 
 		String email = request.email().trim();
-		if (email.isEmpty() || request.password().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing email/password");
+		String name = request.name().trim();
+		if (email.isEmpty() || request.password().isBlank() || name.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing name/email/password");
 		}
 
 		if (usersRepository.findByEmailIgnoreCase(email).isPresent()) {
@@ -62,6 +63,7 @@ public class AuthController {
 
 		Users user = new Users();
 		user.setEmail(email);
+		user.setName(name);
 		user.setPasswordHash(passwordEncoder.encode(request.password()));
 		user.setRole(role);
 		user.setIsActive(true);

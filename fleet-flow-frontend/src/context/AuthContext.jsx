@@ -69,13 +69,13 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (email, password, fullName, userRole) => {
+  const register = async (email, password, name, userRole) => {
     setLoading(true);
     try {
       await api.post("/auth/register", {
         email,
         password,
-        fullName,
+        name,
         role: userRole,
       });
 

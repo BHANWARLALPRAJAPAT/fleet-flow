@@ -1,139 +1,342 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useId, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
+import * as yup from "yup";
+
 import { useAuth } from "../context/AuthContext";
-import "../styles/auth.css";
 
 const ROLES = [
-  { value: "MANAGER", label: "Manager" },
   { value: "DISPATCHER", label: "Dispatcher" },
+  { value: "FLEET_MANAGER", label: "Fleet Manager" },
   { value: "SAFETY_OFFICER", label: "Safety Officer" },
-  { value: "ANALYST", label: "Analyst" },
+  { value: "FINANCIAL_ANALYST", label: "Financial Analyst" },
+  { value: "ADMIN", label: "Admin" },
 ];
 
+const schema = yup
+  .object({
+    name: yup
+      .string()
+      .trim()
+      .required("Name is required")
+      .min(2, "Name must be at least 2 characters"),
+    email: yup
+      .string()
+      .trim()
+      .email("Enter a valid email")
+      .required("Email is required"),
+    password: yup
+      .string()
+      .required("Password is required")
+      .min(6, "Password must be at least 6 characters"),
+    confirmPassword: yup
+      .string()
+      .required("Please confirm password")
+      .oneOf([yup.ref("password")], "Passwords do not match"),
+    role: yup.string().required("Role is required"),
+  })
+  .required();
+
 export default function RegisterPage() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("MANAGER");
-  const [error, setError] = useState("");
-  const { register, loading } = useAuth();
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const confirmPasswordId = useId();
+  const roleId = useId();
   const navigate = useNavigate();
+  const { register: registerUser } = useAuth();
+  const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onTouched",
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "DISPATCHER",
+    },
+  });
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-    const result = await register(email, password, fullName, role);
+  const onSubmit = async (values) => {
+    setServerError("");
+    const result = await registerUser(
+      values.email,
+      values.password,
+      values.name,
+      values.role
+    );
     if (result.success) {
-      navigate("/");
+      navigate("/login", { replace: true });
     } else {
-      setError(result.error);
+      setServerError(result.error || "Registration failed. Try again.");
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-card__brand">
-          <div className="auth-card__logo">🚛</div>
-          <h1 className="auth-card__title">FleetFlow</h1>
-          <p className="auth-card__subtitle">Create your account</p>
+    <div className="bg-background-light dark:bg-background-dark min-h-[100dvh] flex flex-col">
+      <div className="flex-1 flex flex-col">
+        <div className="w-full h-40 sm:h-48 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden shrink-0 bg-[linear-gradient(135deg,#0F172A_0%,#1E293B_100%)]">
+          <div
+            className="absolute inset-0 bg-[radial-gradient(#ffffff10_1px,transparent_1px)] bg-[size:20px_20px]"
+            aria-hidden="true"
+          />
+          <div className="relative z-10">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                <span className="material-icons-round text-white text-2xl">
+                  person_add
+                </span>
+              </div>
+              <span className="text-2xl font-bold text-white tracking-tight">
+                Fleet-Flow
+              </span>
+            </div>
+            <h1 className="text-white text-lg font-medium opacity-90">
+              Create your account
+            </h1>
+            <p className="text-blue-200/60 text-xs mt-1">Get started in minutes.</p>
+          </div>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="auth-form__group">
-            <label className="auth-form__label">Full Name</label>
-            <input
-              className="auth-form__input"
-              type="text"
-              placeholder="John Doe"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="auth-form__group">
-            <label className="auth-form__label">Email</label>
-            <input
-              className="auth-form__input"
-              type="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="auth-form__row">
-            <div className="auth-form__group">
-              <label className="auth-form__label">Password</label>
-              <input
-                className="auth-form__input"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+        <div className="flex-1 flex flex-col px-4 sm:px-6 -mt-6 relative z-20">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md mx-auto rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-6 sm:p-7">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Register
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                Set up your Fleet-Flow account.
+              </p>
             </div>
 
-            <div className="auth-form__group">
-              <label className="auth-form__label">Confirm</label>
-              <input
-                className="auth-form__input"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  htmlFor={nameId}
+                >
+                  Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-400 text-xl">
+                      badge
+                    </span>
+                  </div>
+                  <input
+                    id={nameId}
+                    type="text"
+                    autoComplete="name"
+                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
+                    placeholder="John Doe"
+                    {...register("name")}
+                  />
+                </div>
+                {errors.name?.message && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  htmlFor={emailId}
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-400 text-xl">
+                      mail_outline
+                    </span>
+                  </div>
+                  <input
+                    id={emailId}
+                    type="email"
+                    autoComplete="email"
+                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
+                    placeholder="name@company.com"
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email?.message && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  htmlFor={roleId}
+                >
+                  Role
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-400 text-xl">
+                      admin_panel_settings
+                    </span>
+                  </div>
+                  <select
+                    id={roleId}
+                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white transition-all"
+                    {...register("role")}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.role?.message && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {errors.role.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  htmlFor={passwordId}
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-400 text-xl">
+                      lock_open
+                    </span>
+                  </div>
+                  <input
+                    id={passwordId}
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="block w-full pl-11 pr-11 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
+                    placeholder="••••••••"
+                    {...register("password")}
+                  />
+                  <button
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center"
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <span className="material-icons-round text-slate-400 hover:text-slate-600 text-xl">
+                      {showPassword ? "visibility" : "visibility_off"}
+                    </span>
+                  </button>
+                </div>
+                {errors.password?.message && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                  htmlFor={confirmPasswordId}
+                >
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <span className="material-icons-round text-slate-400 text-xl">
+                      lock
+                    </span>
+                  </div>
+                  <input
+                    id={confirmPasswordId}
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="block w-full pl-11 pr-11 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-slate-900 dark:text-white placeholder-slate-400 transition-all"
+                    placeholder="••••••••"
+                    {...register("confirmPassword")}
+                  />
+                  <button
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center"
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    <span className="material-icons-round text-slate-400 hover:text-slate-600 text-xl">
+                      {showConfirmPassword ? "visibility" : "visibility_off"}
+                    </span>
+                  </button>
+                </div>
+                {errors.confirmPassword?.message && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              {serverError && (
+                <p className="text-red-500 text-sm font-medium">{serverError}</p>
+              )}
+
+              <button
+                className="w-full bg-primary hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-slate-200 dark:shadow-none transition-all active:scale-[0.98] mt-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating account..." : "Create Account"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
+                Already have an account?{" "}
+                <Link to="/login" className="text-secondary font-semibold hover:underline">
+                  Sign In
+                </Link>
+              </p>
             </div>
           </div>
 
-          <div className="auth-form__group">
-            <label className="auth-form__label">Role</label>
-            <select
-              className="auth-form__select"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+          <div className="mt-auto py-4 text-center">
+            <div className="flex justify-center space-x-6 text-xs font-medium text-slate-400 dark:text-slate-600">
+              <a
+                className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
+                href="#"
+                onClick={(e) => e.preventDefault()}
+              >
+                Privacy Policy
+              </a>
+              <a
+                className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
+                href="#"
+                onClick={(e) => e.preventDefault()}
+              >
+                Terms of Service
+              </a>
+              <a
+                className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
+                href="#"
+                onClick={(e) => e.preventDefault()}
+              >
+                Support
+              </a>
+            </div>
           </div>
-
-          {error && <div className="auth-form__error">{error}</div>}
-
-          <button
-            className={`auth-form__submit ${loading ? "auth-form__submit--loading" : ""}`}
-            type="submit"
-            disabled={loading}
-          >
-            Create Account
-          </button>
-        </form>
-
-        <div className="auth-card__footer">
-          Already have an account?{" "}
-          <Link to="/login" className="auth-card__link">
-            Sign in
-          </Link>
         </div>
       </div>
     </div>

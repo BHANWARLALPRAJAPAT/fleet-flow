@@ -37,6 +37,9 @@ public class Users {
 	@Column(nullable = false, unique = true)
 	private String email;
 
+	@Column(name = "name")
+	private String name;
+
 	@Column(name = "password_hash", nullable = false)
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String passwordHash;
