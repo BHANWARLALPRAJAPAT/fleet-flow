@@ -29,7 +29,6 @@ export default function LoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
-  const { login } = useAuth();
 
   const {
     register,
