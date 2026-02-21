@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
+import api from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 
 const schema = yup
@@ -28,6 +29,7 @@ export default function LoginPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
+  const { login } = useAuth();
 
   const {
     register,
