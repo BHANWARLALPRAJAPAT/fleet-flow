@@ -1,10 +1,33 @@
+import { useEffect, useRef, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 export default function DataTable({ columns, data, onSort, emptyMessage = "No data found." }) {
+  const wrapperRef = useRef(null);
+  const [maxBodyHeight, setMaxBodyHeight] = useState(null);
+
+  useEffect(() => {
+    const updateMaxHeight = () => {
+      if (!wrapperRef.current) return;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const bottomGap = 24; // keep visual breathing room near viewport bottom
+      const available = Math.floor(viewportHeight - rect.top - bottomGap);
+      setMaxBodyHeight(available > 0 ? available : null);
+    };
+
+    updateMaxHeight();
+    window.addEventListener("resize", updateMaxHeight);
+    return () => window.removeEventListener("resize", updateMaxHeight);
+  }, [data.length, columns.length]);
+
   return (
-    <div className="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div ref={wrapperRef} className="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-sm">
+      <div
+        className="overflow-y-auto"
+        style={maxBodyHeight ? { maxHeight: `${maxBodyHeight}px` } : undefined}
+      >
       <table className="w-full text-left border-collapse">
-        <thead>
+        <thead className="sticky top-0 z-10">
           <tr className="bg-slate-50 border-bottom border-slate-200">
             {columns.map((col) => (
               <th
@@ -45,6 +68,7 @@ export default function DataTable({ columns, data, onSort, emptyMessage = "No da
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

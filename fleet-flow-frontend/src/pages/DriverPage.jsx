@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, UserCheck, UserX } from "lucide-react";
+import { ChevronDown, Plus, Search, UserCheck, UserX } from "lucide-react";
 import DriverTable from "../components/Driver/DriverTable";
 import DriverForm from "../components/Driver/DriverForm";
 import Modal from "../components/shared/Modal";
@@ -17,6 +17,8 @@ export default function DriverPage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [safetyFilter, setSafetyFilter] = useState("ALL");
 
   const fetchDrivers = async () => {
     setLoading(true);
@@ -79,10 +81,19 @@ export default function DriverPage() {
   };
 
   const filteredDrivers = Array.isArray(drivers)
-    ? drivers.filter(d => 
-        (d.fullName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (d.licenseNo?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-      )
+    ? drivers.filter(d => {
+        const matchesSearch =
+          (d.fullName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (d.licenseNo?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || d.status === statusFilter;
+        const score = Number(d.safetyScore) || 0;
+        const matchesSafety =
+          safetyFilter === "ALL" ||
+          (safetyFilter === "80_PLUS" && score >= 80) ||
+          (safetyFilter === "60_79" && score >= 60 && score < 80) ||
+          (safetyFilter === "BELOW_60" && score < 60);
+        return matchesSearch && matchesStatus && matchesSafety;
+      })
     : [];
 
   return (
@@ -149,9 +160,41 @@ export default function DriverPage() {
             className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
-          <Filter size={18} />
-          <span>Filters</span>
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Status</option>
+            <option value="ON_DUTY">On Duty</option>
+            <option value="OFF_DUTY">Off Duty</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <div className="relative">
+          <select
+            value={safetyFilter}
+            onChange={(e) => setSafetyFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Safety</option>
+            <option value="80_PLUS">80+ Score</option>
+            <option value="60_79">60-79 Score</option>
+            <option value="BELOW_60">Below 60</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <button
+          onClick={() => {
+            setSearchQuery("");
+            setStatusFilter("ALL");
+            setSafetyFilter("ALL");
+          }}
+          className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+        >
+          Clear
         </button>
       </div>
 

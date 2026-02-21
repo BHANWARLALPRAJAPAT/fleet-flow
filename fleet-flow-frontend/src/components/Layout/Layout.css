@@ -44,8 +44,9 @@
    =========================== */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-page);
+  overflow: hidden;
 }
 
 .app-layout__content {
@@ -54,7 +55,9 @@
   margin-top: var(--topbar-height);
   padding: 28px 32px;
   transition: var(--transition);
-  min-height: calc(100vh - var(--topbar-height));
+  height: calc(100vh - var(--topbar-height));
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .app-layout--collapsed .app-layout__content {

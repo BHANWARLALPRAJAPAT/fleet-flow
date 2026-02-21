@@ -21,7 +21,7 @@ import com.backend.fleet_flow_backend.web.dto.TripDto;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/trips")
+@RequestMapping("/trips")
 public class TripController {
 
     private final TripService service;

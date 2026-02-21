@@ -30,9 +30,14 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "safetyScore") {
+      const score = value === "" ? "" : Math.max(0, Math.min(100, Number(value)));
+      setFormData((prev) => ({ ...prev, safetyScore: score }));
+      return;
+    }
     setFormData((prev) => ({ 
       ...prev, 
-      [name]: name === "safetyScore" ? Number(value) : value 
+      [name]: value 
     }));
   };
 
@@ -42,7 +47,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
   };
 
   return (
-    <form id="driver-form" onSubmit={handleSubmit} className="space-y-4">
+    <form id="driver-form" onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5 ml-1">Full Name</label>
@@ -53,6 +58,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             onChange={handleChange}
             placeholder="e.g. Michael Scott"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
             required
           />
         </div>
@@ -66,6 +72,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             onChange={handleChange}
             placeholder="+1 555-0100"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
           />
         </div>
         
@@ -78,6 +85,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             onChange={handleChange}
             placeholder="DL-12345678"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
             required
           />
         </div>
@@ -90,6 +98,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             value={formData.licenseExpiry}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
             required
           />
         </div>
@@ -101,6 +110,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             value={formData.licenseCategory}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
+            autoComplete="off"
           >
             {CATEGORIES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -113,6 +123,7 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             value={formData.status}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
+            autoComplete="off"
           >
             {STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
           </select>
@@ -129,6 +140,8 @@ export default function DriverForm({ initialData, onSubmit, onCancel }) {
             required
             min="0"
             max="100"
+            step="1"
+            autoComplete="off"
           />
         </div>
       </div>

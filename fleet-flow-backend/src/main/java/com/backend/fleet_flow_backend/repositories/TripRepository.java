@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.backend.fleet_flow_backend.entities.Trip;
 import com.backend.fleet_flow_backend.entities.TripStatus;
 
+@RepositoryRestResource(exported = false)
 public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByStatus(TripStatus status);

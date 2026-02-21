@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { ChevronDown, Plus, Search } from "lucide-react";
 import VehicleTable from "../components/Vehicle/VehicleTable";
 import VehicleForm from "../components/Vehicle/VehicleForm";
 import Modal from "../components/shared/Modal";
@@ -17,6 +17,9 @@ export default function VehiclePage() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [regionFilter, setRegionFilter] = useState("ALL");
 
   const fetchVehicles = async () => {
     setLoading(true);
@@ -78,11 +81,24 @@ export default function VehiclePage() {
   };
 
   const filteredVehicles = Array.isArray(vehicles) 
-    ? vehicles.filter(v => 
-        (v.nameModel?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (v.licensePlate?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-      )
+    ? vehicles.filter(v => {
+        const matchesSearch =
+          (v.nameModel?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (v.licensePlate?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || v.status === statusFilter;
+        const matchesType = typeFilter === "ALL" || v.type === typeFilter;
+        const matchesRegion = regionFilter === "ALL" || (v.region || "") === regionFilter;
+        return matchesSearch && matchesStatus && matchesType && matchesRegion;
+      })
     : [];
+
+  const regionOptions = Array.from(
+    new Set(
+      (Array.isArray(vehicles) ? vehicles : [])
+        .map((v) => (v.region || "").trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b));
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -113,9 +129,59 @@ export default function VehiclePage() {
             className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
-          <Filter size={18} />
-          <span>Filters</span>
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Status</option>
+            <option value="AVAILABLE">Available</option>
+            <option value="ON_TRIP">On Trip</option>
+            <option value="IN_SHOP">In Shop</option>
+            <option value="OUT_OF_SERVICE">Out of Service</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <div className="relative">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Types</option>
+            <option value="TRUCK">Truck</option>
+            <option value="VAN">Van</option>
+            <option value="BIKE">Bike</option>
+            <option value="OTHER">Other</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <div className="relative">
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Regions</option>
+            {regionOptions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <button
+          onClick={() => {
+            setSearchQuery("");
+            setStatusFilter("ALL");
+            setTypeFilter("ALL");
+            setRegionFilter("ALL");
+          }}
+          className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+        >
+          Clear
         </button>
       </div>
 

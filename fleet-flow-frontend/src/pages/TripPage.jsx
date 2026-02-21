@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, PlayCircle, CheckCircle, XCircle } from "lucide-react";
+import { ChevronDown, Plus, Search, PlayCircle, CheckCircle, XCircle } from "lucide-react";
 import TripTable from "../components/Trip/TripTable";
 import TripForm from "../components/Trip/TripForm";
 import Modal from "../components/shared/Modal";
@@ -22,6 +22,8 @@ export default function TripPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [assignmentFilter, setAssignmentFilter] = useState("ALL");
 
   const fetchData = async () => {
     setLoading(true);
@@ -96,10 +98,20 @@ export default function TripPage() {
     }
   };
 
-  const filteredTrips = Array.isArray(trips) ? trips.filter(t => 
-    (t.origin || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (t.destination || "").toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
+  const filteredTrips = Array.isArray(trips)
+    ? trips.filter(t => {
+        const matchesSearch =
+          (t.origin || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (t.destination || "").toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
+        const hasAssignment = Boolean(t.vehicleId) && Boolean(t.driverId);
+        const matchesAssignment =
+          assignmentFilter === "ALL" ||
+          (assignmentFilter === "ASSIGNED" && hasAssignment) ||
+          (assignmentFilter === "UNASSIGNED" && !hasAssignment);
+        return matchesSearch && matchesStatus && matchesAssignment;
+      })
+    : [];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -139,9 +151,41 @@ export default function TripPage() {
             className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
-          <Filter size={18} />
-          <span>Filters</span>
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Status</option>
+            <option value="DRAFT">Draft</option>
+            <option value="DISPATCHED">Dispatched</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <div className="relative">
+          <select
+            value={assignmentFilter}
+            onChange={(e) => setAssignmentFilter(e.target.value)}
+            className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <option value="ALL">All Assignments</option>
+            <option value="ASSIGNED">Assigned</option>
+            <option value="UNASSIGNED">Unassigned</option>
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        </div>
+        <button
+          onClick={() => {
+            setSearchQuery("");
+            setStatusFilter("ALL");
+            setAssignmentFilter("ALL");
+          }}
+          className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+        >
+          Clear
         </button>
       </div>
 

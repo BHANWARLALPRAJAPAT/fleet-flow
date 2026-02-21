@@ -26,7 +26,11 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+    if (name === "cargoWeightKg") {
+      nextValue = value === "" ? "" : String(Math.max(0, Number(value)));
+    }
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
     setError("");
   };
 
@@ -34,9 +38,14 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const weight = Number(formData.cargoWeightKg);
+    if (!Number.isFinite(weight) || weight < 0) {
+      setError("Cargo weight must be a non-negative number");
+      return;
+    }
 
     const capacity = Number(selectedVehicle?.maxCapacityKg || selectedVehicle?.capacity || 0);
-    if (selectedVehicle && Number(formData.cargoWeightKg) > capacity) {
+    if (selectedVehicle && weight > capacity) {
       setError(`Cargo weight exceeds vehicle capacity (${capacity.toLocaleString()} kg)`);
       return;
     }
@@ -44,14 +53,14 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
     onSubmit({
       origin: formData.origin,
       destination: formData.destination,
-      cargoWeightKg: Number(formData.cargoWeightKg),
+      cargoWeightKg: weight,
       vehicleId: formData.vehicleId ? Number(formData.vehicleId) : null,
       driverId: formData.driverId ? Number(formData.driverId) : null,
     });
   };
 
   return (
-    <form id="trip-form" onSubmit={handleSubmit} className="space-y-4">
+    <form id="trip-form" onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vehicle Selection */}
         <div className="col-span-2">
@@ -61,6 +70,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             value={formData.vehicleId}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
+            autoComplete="off"
           >
             <option value="">Select a vehicle...</option>
             {vehicles
@@ -81,6 +91,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             value={formData.driverId}
             onChange={handleChange}
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
+            autoComplete="off"
           >
             <option value="">Select a driver...</option>
             {drivers
@@ -103,6 +114,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             onChange={handleChange}
             placeholder="e.g. Warehouse A"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
             required
           />
         </div>
@@ -116,6 +128,7 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
             onChange={handleChange}
             placeholder="e.g. Retail Store #5"
             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+            autoComplete="off"
             required
           />
         </div>
@@ -132,6 +145,8 @@ export default function TripForm({ initialData, vehicles, drivers, onSubmit }) {
               className={`w-full px-4 py-2.5 bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all`}
               required
               min="0"
+              step="0.01"
+              autoComplete="off"
             />
             {selectedVehicle && (
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase">

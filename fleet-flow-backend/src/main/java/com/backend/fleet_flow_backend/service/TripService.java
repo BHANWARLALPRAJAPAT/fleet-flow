@@ -46,8 +46,14 @@ public class TripService {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        return tripRepo.findFiltered(ts, vehicleId, driverId)
-                .stream().map(this::toDto).toList();
+        final TripStatus filterStatus = ts;
+        return tripRepo.findAll()
+                .stream()
+                .filter(t -> filterStatus == null || t.getStatus() == filterStatus)
+                .filter(t -> vehicleId == null || (t.getVehicle() != null && vehicleId.equals(t.getVehicle().getId())))
+                .filter(t -> driverId == null || (t.getDriver() != null && driverId.equals(t.getDriver().getId())))
+                .map(this::toDto)
+                .toList();
     }
 
     public TripDto findById(Long id) {
