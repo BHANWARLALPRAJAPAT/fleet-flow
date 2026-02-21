@@ -20,9 +20,13 @@ export default function DriverPage() {
     setLoading(true);
     try {
       const res = await api.get("/drivers");
-      setDrivers(res.data);
+      if (res.data && Array.isArray(res.data)) {
+        setDrivers(res.data);
+      } else {
+        throw new Error("Invalid data format");
+      }
     } catch (err) {
-      console.warn("Backend /drivers not found, using mock data");
+      console.warn("Backend /drivers not found or invalid, using mock data");
       // Set future and near-future dates for testing alerts
       const today = new Date();
       const nextMonth = new Date(today);
@@ -107,10 +111,12 @@ export default function DriverPage() {
     setIsConfirmOpen(false);
   };
 
-  const filteredDrivers = drivers.filter(d => 
-    d.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.licenseNumber.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDrivers = Array.isArray(drivers)
+    ? drivers.filter(d => 
+        (d.fullName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (d.licenseNumber?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -139,7 +145,7 @@ export default function DriverPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Drivers</p>
-            <p className="text-xl font-bold text-slate-800">{drivers.filter(d => d.status !== 'OFF_DUTY').length}</p>
+            <p className="text-xl font-bold text-slate-800">{Array.isArray(drivers) ? drivers.filter(d => d.status !== 'OFF_DUTY').length : 0}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -148,7 +154,7 @@ export default function DriverPage() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Suspended</p>
-            <p className="text-xl font-bold text-slate-800">{drivers.filter(d => d.status === 'SUSPENDED').length}</p>
+            <p className="text-xl font-bold text-slate-800">{Array.isArray(drivers) ? drivers.filter(d => d.status === 'SUSPENDED').length : 0}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -158,7 +164,7 @@ export default function DriverPage() {
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Avg Safety Score</p>
             <p className="text-xl font-bold text-slate-800">
-              {drivers.length ? Math.round(drivers.reduce((acc, curr) => acc + curr.safetyScore, 0) / drivers.length) : 0}
+              {Array.isArray(drivers) && drivers.length ? Math.round(drivers.reduce((acc, curr) => acc + (curr.safetyScore || 0), 0) / drivers.length) : 0}
             </p>
           </div>
         </div>
