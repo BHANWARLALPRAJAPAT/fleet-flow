@@ -1,8 +1,235 @@
+import { useState, useEffect } from "react";
+import { Plus, Search, Filter, UserCheck, UserX } from "lucide-react";
+import DriverTable from "../components/Driver/DriverTable";
+import DriverForm from "../components/Driver/DriverForm";
+import Modal from "../components/shared/Modal";
+import ConfirmDialog from "../components/shared/ConfirmDialog";
+import api from "../api/axiosClient";
+
 export default function DriverPage() {
+  const [drivers, setDrivers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // UI State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchDrivers = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/drivers");
+      setDrivers(res.data);
+    } catch (err) {
+      console.warn("Backend /drivers not found, using mock data");
+      // Set future and near-future dates for testing alerts
+      const today = new Date();
+      const nextMonth = new Date(today);
+      nextMonth.setDate(today.getDate() + 25);
+      const nextYear = new Date(today);
+      nextYear.setFullYear(today.getFullYear() + 1);
+
+      setDrivers([
+        { 
+          id: 1, 
+          fullName: "Michael Scott", 
+          licenseNumber: "DL-10023", 
+          licenseExpiry: nextYear.toISOString().split('T')[0], 
+          licenseCategory: "VAN", 
+          status: "ON_DUTY", 
+          safetyScore: 92, 
+          tripsCompleted: 145 
+        },
+        { 
+          id: 2, 
+          fullName: "Dwight Schrute", 
+          licenseNumber: "DL-99432", 
+          licenseExpiry: nextMonth.toISOString().split('T')[0], 
+          licenseCategory: "TRUCK", 
+          status: "ON_TRIP", 
+          safetyScore: 98, 
+          tripsCompleted: 210 
+        },
+        { 
+          id: 3, 
+          fullName: "Jim Halpert", 
+          licenseNumber: "DL-40502", 
+          licenseExpiry: "2024-01-15", // Expired
+          licenseCategory: "BIKE", 
+          status: "SUSPENDED", 
+          safetyScore: 45, 
+          tripsCompleted: 88 
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
+
+  const handleCreate = () => {
+    setSelectedDriver(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (driver) => {
+    setSelectedDriver(driver);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = (driver) => {
+    setSelectedDriver(driver);
+    setIsConfirmOpen(true);
+  };
+
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (selectedDriver) {
+        // Update mock
+        setDrivers(prev => prev.map(d => d.id === selectedDriver.id ? { ...d, ...formData } : d));
+      } else {
+        // Create mock
+        const newDriver = { ...formData, id: Date.now() };
+        setDrivers(prev => [newDriver, ...prev]);
+      }
+      setIsFormOpen(false);
+    } catch (err) {
+      alert("Failed to save driver");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    setDrivers(prev => prev.filter(d => d.id !== selectedDriver.id));
+    setIsConfirmOpen(false);
+  };
+
+  const filteredDrivers = drivers.filter(d => 
+    d.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.licenseNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div>
-      <h2>👤 Driver Management</h2>
-      <p>Manage your drivers here. Coming in Feature F5.</p>
+    <div className="p-8 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            Driver Management
+          </h1>
+          <p className="text-slate-500 text-sm">Monitor driver performance, certifications, and shift status.</p>
+        </div>
+        <button
+          onClick={handleCreate}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-slate-800 text-white font-semibold rounded-xl shadow-lg shadow-slate-200 transition-all active:scale-95"
+        >
+          <Plus size={20} />
+          Register Driver
+        </button>
+      </div>
+
+      {/* Stats Overview (Small Row) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center">
+            <UserCheck size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Drivers</p>
+            <p className="text-xl font-bold text-slate-800">{drivers.filter(d => d.status !== 'OFF_DUTY').length}</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+            <UserX size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Suspended</p>
+            <p className="text-xl font-bold text-slate-800">{drivers.filter(d => d.status === 'SUSPENDED').length}</p>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+            <Search size={20} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Avg Safety Score</p>
+            <p className="text-xl font-bold text-slate-800">
+              {drivers.length ? Math.round(drivers.reduce((acc, curr) => acc + curr.safetyScore, 0) / drivers.length) : 0}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search driver name or license..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
+          />
+        </div>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+          <Filter size={18} />
+          <span>Filters</span>
+        </button>
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="py-20 text-center text-slate-400 animate-pulse font-medium">Loading driver records...</div>
+      ) : (
+        <DriverTable
+          drivers={filteredDrivers}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+      )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title={selectedDriver ? "Edit Driver Details" : "Register New Driver"}
+        footer={
+          <>
+            <button
+              onClick={() => setIsFormOpen(false)}
+              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              form="driver-form"
+              type="submit"
+              className="px-6 py-2 bg-primary hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition-all shadow-lg"
+            >
+              Save Driver
+            </button>
+          </>
+        }
+      >
+        <DriverForm
+          initialData={selectedDriver}
+          onSubmit={handleFormSubmit}
+          onCancel={() => setIsFormOpen(false)}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Driver Profile"
+        message={`Are you sure you want to remove ${selectedDriver?.fullName}? All associated trip history will be archived.`}
+      />
     </div>
   );
 }
