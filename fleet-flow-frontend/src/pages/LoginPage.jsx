@@ -1,10 +1,9 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
-import api from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 
 const schema = yup
@@ -55,9 +54,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark min-h-[max(884px,100dvh)] flex flex-col">
+    <div className="bg-background-light dark:bg-background-dark min-h-[100dvh] flex flex-col">
       <div className="flex-1 flex flex-col">
-        <div className="w-full h-48 sm:h-64 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden shrink-0 bg-[linear-gradient(135deg,#0F172A_0%,#1E293B_100%)]">
+        <div className="w-full h-40 sm:h-48 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden shrink-0 bg-[linear-gradient(135deg,#0F172A_0%,#1E293B_100%)]">
           <div
             className="absolute inset-0 bg-[radial-gradient(#ffffff10_1px,transparent_1px)] bg-[size:20px_20px]"
             aria-hidden="true"
@@ -82,9 +81,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col px-6 -mt-8 relative z-20">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md mx-auto rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8">
-            <div className="mb-8">
+        <div className="flex-1 flex flex-col px-4 sm:px-6 -mt-6 relative z-20">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md mx-auto rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-6 sm:p-7">
+            <div className="mb-6">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Sign In
               </h2>
@@ -93,7 +92,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
@@ -189,21 +188,20 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-10 text-center">
+            <div className="mt-6 text-center">
               <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Don&apos;t have an account?{" "}
-                <a
+                <Link
+                  to="/register"
                   className="text-secondary font-semibold hover:underline"
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
                 >
-                  Register Fleet
-                </a>
+                  Register
+                </Link>
               </p>
             </div>
           </div>
 
-          <div className="mt-auto py-8 text-center">
+          <div className="mt-auto py-4 text-center">
             <div className="flex justify-center space-x-6 text-xs font-medium text-slate-400 dark:text-slate-600">
               <a
                 className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors"

@@ -34,6 +34,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE TABLE IF NOT EXISTS app_users (
   id            BIGSERIAL PRIMARY KEY,
   email         TEXT NOT NULL UNIQUE,
+  name          TEXT,
   password_hash TEXT NOT NULL,
   role          user_role NOT NULL DEFAULT 'DISPATCHER',
   is_active     BOOLEAN NOT NULL DEFAULT TRUE,
