@@ -32,7 +32,12 @@ export default function VehicleForm({ initialData, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      maxCapacityKg: Number(formData.maxCapacityKg) || 0,
+      odometerKm: Number(formData.odometerKm) || 0,
+      isRetired: false,
+    });
   };
 
   return (

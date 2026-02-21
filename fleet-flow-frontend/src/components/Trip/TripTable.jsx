@@ -18,9 +18,9 @@ export default function TripTable({ trips, vehicles, drivers, onEdit, onDelete, 
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 font-bold text-slate-800">
             <MapPin size={12} className="text-slate-400" />
-            <span>{row.origin}</span>
+            <span>{row.origin || "—"}</span>
             <span className="text-slate-300">→</span>
-            <span>{row.destination}</span>
+            <span>{row.destination || "—"}</span>
           </div>
           <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
             Weight: {row.cargoWeightKg != null ? Number(row.cargoWeightKg).toLocaleString() : "—"} kg
@@ -32,12 +32,13 @@ export default function TripTable({ trips, vehicles, drivers, onEdit, onDelete, 
       key: "assignment",
       label: "Assignment",
       render: (_, row) => {
-        const vehicleName = row.vehicleName || vehicles.find(v => v.id === row.vehicleId)?.nameModel || "Unknown";
-        const driverName = row.driverName || drivers.find(d => d.id === row.driverId)?.fullName || "Unknown";
+        // Backend TripDto includes vehicleName and driverName directly
+        const vName = row.vehicleName || vehicles.find(v => v.id === row.vehicleId)?.nameModel || "Unassigned";
+        const dName = row.driverName || drivers.find(d => d.id === row.driverId)?.fullName || "Unassigned";
         return (
           <div className="flex flex-col text-xs">
-            <span className="font-semibold text-slate-700">🚛 {vehicleName}</span>
-            <span className="text-slate-400">👤 {driverName}</span>
+            <span className="font-semibold text-slate-700">🚛 {vName}</span>
+            <span className="text-slate-400">👤 {dName}</span>
           </div>
         );
       },
@@ -50,7 +51,7 @@ export default function TripTable({ trips, vehicles, drivers, onEdit, onDelete, 
     {
       key: "createdAt",
       label: "Created",
-      render: (val) => new Date(val).toLocaleDateString(),
+      render: (val) => val ? new Date(val).toLocaleDateString() : "—",
     },
     {
       key: "actions",
